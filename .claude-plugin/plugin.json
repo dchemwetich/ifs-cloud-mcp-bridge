@@ -1,0 +1,13 @@
+{
+  "name": "ifs-mcp-server",
+  "description": "Connect Claude to your IFS Cloud ERP via OAuth 2.0. Query OData APIs, export to CSV, and build reusable API guides.",
+  "version": "2.0.0",
+  "author": {
+    "name": "David Chemwetich",
+    "url": "https://github.com/dchemwetich"
+  },
+  "homepage": "https://github.com/dchemwetich/ifs-cloud-mcp-bridge",
+  "repository": "https://github.com/dchemwetich/ifs-cloud-mcp-bridge",
+  "license": "MIT",
+  "keywords": ["ifs", "ifs-cloud", "erp", "odata", "oauth", "python"]
+}

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "ifs": {
+      "command": "python",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/launch.py"]
+    }
+  }
+}
