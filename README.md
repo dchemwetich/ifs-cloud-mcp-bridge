@@ -94,7 +94,11 @@ If no skill matches, the agent finds the projection in the IFS navigator and ask
    `launch.py` runs the server inside the repo's `.venv`. The Claude Desktop one-click `.mcpb` bundle from the TypeScript version is not offered for v2.
 
 3. **Register your IFS instance** by asking the agent to add an environment ([how](docs/getting-started/ENVIRONMENTS.md)).
-4. **Log in:** ask the agent to log in to IFS (for a headless `client_credentials` environment this happens automatically).
+4. **Log in:** ask the agent to log in to IFS (for a headless `client_credentials` environment this happens automatically). A local page shows which environment and instance you are signing in to, and whether it is read-only, before sending you to the IFS sign-in:
+
+   | Sign-in page | After signing in |
+   |---|---|
+   | ![Sign-in page](docs/images/login-page-dark.png) | ![Signed in](docs/images/login-success-dark.png) |
 5. **Build your first skill:** ask the agent to create a skill for a screen you use, for example *"I work in the Purchase Order screen every day. Create a skill so you can help me with it."* It finds the projection behind the screen, fetches the spec from your IFS, asks you a few questions and saves the skill. See [Skill Authoring](docs/guides/SKILL_AUTHORING.md).
 
 Once the skill is saved, ask for what you need in plain language, as in the examples above.
