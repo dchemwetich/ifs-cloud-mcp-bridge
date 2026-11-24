@@ -34,6 +34,7 @@ def test_build_api_url_accepts_plain_paths():
 def test_header_allowlist():
     assert disallowed_headers(None) == []
     assert disallowed_headers({"If-Match": "*", "X-IFS-Content-Disposition": "a"}) == []
+    assert disallowed_headers({"x-ifs-accept-warnings": "true"}) == []
     assert disallowed_headers({"Authorization": "x", "if-none-match": "y", "Host": "z"}) == ["Authorization", "Host"]
 
 

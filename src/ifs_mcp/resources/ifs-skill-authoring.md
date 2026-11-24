@@ -79,6 +79,33 @@ For OData query syntax, use `get_api_guide({ guide: "ifs-common-odata-reference"
 
 ---
 
+## Write-call gotchas to document in skills
+
+Note these in any skill that creates or changes data, next to the operation they affect.
+
+### Date/time values in write bodies
+
+In POST/PATCH bodies and action parameters, send date/time values as **local IFS server time with no timezone suffix**: `"2026-05-18T10:00:00"`, not `"2026-05-18T10:00:00Z"` or `"...+03:00"`. Values sent with a suffix have been seen to land hours off and fail validation (for example `WRNGSTARTTIME`, "cannot be a future time", on shop floor clockings). Timestamps in responses may carry a `Z` - don't assume they are UTC; compare one with what the IFS client shows for the same record before converting anything. If unsure of the server's time zone, ask the user.
+
+### ODP_DESERIALIZATION_ERROR
+
+IFS could not read the request body: a field has the wrong JSON type or format. Check, in this order:
+
+1. **Field types in the spec** - `read_openapi_file` (or the live spec) lists each field's type. A field typed `string` must be sent as a JSON string even when it looks like a boolean or number: `...Db` flags such as `RentalDb` take `"TRUE"`/`"FALSE"`, not `true`/`false`.
+2. **How the IFS client sends it** - record the same action in the browser and run `parse_har_file`. The recorded body shows the exact field names and shape. The browser sends numbers as strings (`IEEE754Compatible=true`), so take the type from the spec, not the recording.
+3. **Date formats** - `Edm.Date` takes `"2026-05-18"`, `Edm.DateTimeOffset` a full timestamp (see above).
+
+Document the corrected type in the skill so the next call gets it right first time.
+
+### Warnings (X-IFS-Accept-Warnings)
+
+Some IFS writes raise a warning that the IFS client shows as an OK/Cancel question (for example `INVALSHIPDATE` when a planned ship date is in the past). Through the API it comes back as an error unless the request carries `X-IFS-Accept-Warnings: true`.
+
+- In the skill, list the warnings an operation is known to raise and what they mean.
+- Never tell the agent to send the header by default. The call is made without it first; the agent shows the user the warning and repeats the call with the header only if the user agrees - the same choice the IFS client would have asked them to make.
+
+---
+
 ## HAR mode guidelines
 
 When building from a HAR file:

@@ -9,7 +9,7 @@ This is a local [Model Context Protocol](https://modelcontextprotocol.io) (MCP) 
 - **IFS Cloud URL, OAuth Realm, and Client ID** - provided by you, either through the host's extension settings (where it offers them) or by registering a named environment via the `add_ifs_environment` tool; used only to construct OAuth 2.0 requests to your own IFS Cloud instance. Stored locally at `~/.ifs-mcp/config.json` when using named environments.
 - **Client secret** - only for environments using `authMode: "client_credentials"` (headless/service-account authentication). The server never asks for it and `add_ifs_environment` refuses to accept one, so it does not pass through the chat. You supply it yourself, either as the `IFS_CLIENT_SECRET_<NAME>` environment variable (nothing is written to disk by this server) or by adding a `clientSecret` entry to `~/.ifs-mcp/config.json` (stored there in plaintext). It is read only when requesting a token from your own IFS Cloud instance and is never logged or returned in tool output. See [Security](SECURITY.md#if-you-use-client_credentials-environments) for handling recommendations.
 - **OAuth access and refresh tokens** - obtained during authentication with your IFS Cloud instance (for `client_credentials` environments, access tokens only); stored locally at `~/.ifs-mcp/session.json` on your machine, keyed per environment.
-- **API responses** - data returned by your IFS Cloud APIs; processed in memory and returned to the MCP host and the AI model it uses. May be written to local CSV files (in `~/Downloads/` or `~/.ifs-mcp/exports/`) when using the `export_api_data` tool.
+- **API responses** - data returned by your IFS Cloud APIs; processed in memory and returned to the MCP host and the AI model it uses. May be written to local CSV files (in `EXPORT_DIR` if set, otherwise `~/Downloads/` or `~/.ifs-mcp/exports/`) when using the `export_api_data` tool.
 - **Skill files** - Markdown guide files written to your configured `SKILLS_DIR` or the server's local `resources/` directory.
 
 ## What data is NOT collected or transmitted
@@ -25,7 +25,7 @@ This is a local [Model Context Protocol](https://modelcontextprotocol.io) (MCP) 
 |---|---|---|
 | `~/.ifs-mcp/session.json` | OAuth tokens (access + refresh), keyed per environment | `0600` (owner read/write only) on macOS and Linux |
 | `~/.ifs-mcp/config.json` | Registered IFS environments: URL, realm, client ID, and - only if you add it there yourself for a `client_credentials` environment - the client secret in plaintext | `0600` (owner read/write only) on macOS and Linux |
-| `~/Downloads/` (or `~/.ifs-mcp/exports/` if there is no Downloads folder) | CSV exports from `export_api_data`: the full result data | Standard file permissions |
+| `EXPORT_DIR` if set, otherwise `~/Downloads/` (or `~/.ifs-mcp/exports/` if there is no Downloads folder) | CSV exports from `export_api_data`: the full result data | Standard file permissions |
 | System temp folder, `ifs-mcp/login-<state>.html` | The temporary login page for a browser login: the authorization URL, client ID and PKCE challenge. No tokens. Not deleted automatically | Standard file permissions |
 | `SKILLS_DIR` or `src/ifs_mcp/resources/` | Skill Markdown files | Standard file permissions |
 

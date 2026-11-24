@@ -1,6 +1,6 @@
 # Configuration
 
-Core settings (IFS Cloud URL, OAuth Realm, Client ID) - and, if you need more than one IFS instance or headless `client_credentials` auth, named environments - are covered in **[Managing IFS Environments](ENVIRONMENTS.md)**. This page covers the one remaining optional setting: the Skills Directory.
+Core settings (IFS Cloud URL, OAuth Realm, Client ID) - and, if you need more than one IFS instance or headless `client_credentials` auth, named environments - are covered in **[Managing IFS Environments](ENVIRONMENTS.md)**. This page covers the remaining optional settings: the Skills Directory and the Export Directory.
 
 ---
 
@@ -25,6 +25,14 @@ Don't rely on editing the plugin's own `.mcp.json`: a plugin update replaces it.
 - `get_api_guide` scans both your folder and the built-in resources - the bundled guides (client navigator, quick reports, OData reference, skill authoring) remain available
 - Skills in your folder take precedence over same-named built-in files
 - You can version-control or share the folder across your team
+
+---
+
+## Export Directory
+
+`export_api_data` writes CSV files to `~/Downloads`, or to `~/.ifs-mcp/exports` if there is no Downloads folder. To use another folder, set `EXPORT_DIR` to an absolute path, the same way as `SKILLS_DIR` (a `.env` file in the project root, or an environment variable set before launching your AI agent). The folder is created if it doesn't exist.
+
+Exports contain the full result data, so pick a folder with suitable access rights, not a shared or synced folder, if the data is sensitive.
 
 ---
 

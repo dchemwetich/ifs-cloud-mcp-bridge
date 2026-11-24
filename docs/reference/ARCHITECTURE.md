@@ -133,7 +133,7 @@ Authenticated HTTP client (`httpx`). Resolves the base URL per-environment via `
 
 ### 6. Configuration (`src/ifs_mcp/endpoints.py`, `src/ifs_mcp/config.py`)
 Two resolution paths, checked in this order:
-1. **Environment variables** (legacy, always wins if set): `API_BASE_URL`, `OAUTH_REALM`, `OAUTH_CLIENT_ID`, `SKILLS_DIR` (also read from a `.env` file in the project root).
+1. **Environment variables** (legacy, always wins if set): `API_BASE_URL`, `OAUTH_REALM`, `OAUTH_CLIENT_ID`, `SKILLS_DIR`, `EXPORT_DIR` (also read from a `.env` file in the project root).
 2. **Environment registry** (`src/ifs_mcp/config.py`, persisted to `~/.ifs-mcp/config.json`): named environments, each with its own `apiBaseUrl`/`oauthRealm`/`oauthClientId`, optional `authMode` (`authorization_code` default, or `client_credentials`), and `readOnly` flag. A client secret is not part of the registry the tools see: it comes from the `IFS_CLIENT_SECRET_<NAME>` environment variable or a `clientSecret` entry added to `config.json` by hand, and only `get_client_secret()` reads it. This is the main configuration path for every host. See [Managing IFS Environments](../getting-started/ENVIRONMENTS.md).
 
 Session/token keys are the active environment's name (or `"default"` in legacy env-var mode) rather than an opaque generated ID - `get_active_session_key()` in `config.py` resolves this, so tokens are always paired with the environment they were issued for.

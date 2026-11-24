@@ -28,7 +28,7 @@ This tool is designed to keep your data local. Understanding what stays on your 
 | **Client secret** (only for environments using `client_credentials` auth mode) | Only where you put it: the `IFS_CLIENT_SECRET_<NAME>` environment variable (not written to disk by this tool), or a `clientSecret` entry you add to `~/.ifs-mcp/config.json` yourself, in plaintext, file permissions `0600` on macOS/Linux. It is never accepted through chat |
 | OAuth Client ID (legacy single-environment setup) | `.env` file in the project root (gitignored) or the host's MCP server settings |
 | Skill files (API guides) | `src/ifs_mcp/resources/*.md` in the server directory, or your configured skills directory |
-| CSV exports | `~/Downloads/` (or `~/.ifs-mcp/exports/`), full result data, standard file permissions |
+| CSV exports | `EXPORT_DIR` if set, otherwise `~/Downloads/` (or `~/.ifs-mcp/exports/`), full result data, standard file permissions |
 | Temporary login page | System temp folder, `ifs-mcp/login-<state>.html`: authorization URL, client ID and PKCE challenge, no tokens; not deleted automatically |
 | Session state | In-memory only, restored from disk on startup |
 

@@ -29,6 +29,15 @@ def test_pagination_and_keyed_endpoints():
     assert not api.looks_like_keyed_endpoint("/CompanySet?$filter=(a)")
 
 
+def test_export_dir_env_overrides_downloads(home, monkeypatch, tmp_path):
+    (home / "Downloads").mkdir(exist_ok=True)
+    monkeypatch.delenv("EXPORT_DIR", raising=False)
+    assert api._export_dir() == home / "Downloads"
+    target = tmp_path / "exports" / "nested"
+    monkeypatch.setenv("EXPORT_DIR", str(target))
+    assert api._export_dir() == target and target.is_dir()  # created on demand
+
+
 def test_export_name_cannot_leave_folder():
     assert api.safe_export_name("../../etc/passwd") == "_.._etc_passwd"
     assert api.safe_export_name("...") == "export"

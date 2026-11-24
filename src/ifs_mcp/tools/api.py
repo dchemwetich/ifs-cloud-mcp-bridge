@@ -44,7 +44,9 @@ CALL_DEFINITION = {
         "Targets the active IFS environment unless 'environment' is given. "
         "If the response contains error 'no_environment_selected', do not guess - show the user the listed environments and ask which one to use, then call use_ifs_environment. "
         "Pass an If-Match header for conditional PATCH/DELETE on projections that require optimistic concurrency (check the API guide or a prior GET response's @odata.etag); on 'precondition_failed' GET the record again and ask the user before retrying with the new etag. "
-        "Pass X-IFS-Content-Disposition to set the filename IFS uses for a file upload/download."
+        "Pass X-IFS-Content-Disposition to set the filename IFS uses for a file upload/download. "
+        "X-IFS-Accept-Warnings: true accepts IFS warnings (soft errors) on a write; never send it by default - "
+        "first make the call without it, show the user the warning IFS returns, and repeat with the header only if the user agrees."
     ),
     "inputSchema": {
         "type": "object",
@@ -59,7 +61,7 @@ CALL_DEFINITION = {
             "body": {"type": "object", "description": "Request body (for POST/PUT/PATCH)"},
             "headers": {
                 "type": "object",
-                "description": "Optional request headers. Only If-Match, If-None-Match (OData optimistic concurrency) and X-IFS-Content-Disposition (IFS's custom header for naming an uploaded/downloaded file) are allowed - any other header is rejected.",
+                "description": "Optional request headers. Only If-Match, If-None-Match (OData optimistic concurrency), X-IFS-Accept-Warnings (accept IFS warnings, only after the user agreed) and X-IFS-Content-Disposition (IFS's custom header for naming an uploaded/downloaded file) are allowed - any other header is rejected.",
                 "additionalProperties": {"type": "string"},
             },
         },
@@ -86,7 +88,7 @@ def _large_response_summary(data: Any, endpoint: str) -> dict[str, Any] | None:
             "preview": "Show a preview: re-run with $top=N (e.g., $top=10) to see the first few records.",
             "filter": f"Narrow it down: add $filter on fields like {', '.join(fields[:3])} to find specific records.",
             "select_fields": f"Slim the columns: use $select to return only the fields they care about (e.g., $select={','.join(fields[:3])}).",
-            "export": f"Save it all: use export_api_data to download all {total} records as a CSV file to their Downloads folder.",
+            "export": f"Save it all: use export_api_data to download all {total} records as a CSV file on their machine.",
         },
         "endpoint_used": endpoint,
     }
@@ -238,7 +240,7 @@ async def guide_handler(args: dict[str, Any], _oauth: Any = None) -> dict[str, A
 EXPORT_DEFINITION = {
     "name": "export_api_data",
     "annotations": {"readOnlyHint": False, "destructiveHint": False, "openWorldHint": True},
-    "description": "Export large API result sets to a CSV file. Fetches data in batches of 100 records using $top/$skip pagination and saves to ~/Downloads/ (or ~/.ifs-mcp/exports/ if that doesn't exist). Use this when call_protected_api returns a 'Response too large' warning. Keyed/singleton endpoints (e.g. CompanySet(Company='10')) are also supported - exported as a single row, without pagination.",
+    "description": "Export large API result sets to a CSV file. Fetches data in batches of 100 records using $top/$skip pagination and saves to EXPORT_DIR if the user set it, otherwise ~/Downloads/ (or ~/.ifs-mcp/exports/ if that doesn't exist). Use this when call_protected_api returns a 'Response too large' warning. Keyed/singleton endpoints (e.g. CompanySet(Company='10')) are also supported - exported as a single row, without pagination.",
     "inputSchema": {
         "type": "object",
         "properties": {
@@ -250,7 +252,7 @@ EXPORT_DEFINITION = {
             "body": {"type": "object", "description": "Request body (for POST/PUT/PATCH)"},
             "headers": {
                 "type": "object",
-                "description": "Optional request headers. Only If-Match, If-None-Match, and X-IFS-Content-Disposition are allowed - any other header is rejected.",
+                "description": "Optional request headers. Only If-Match, If-None-Match, X-IFS-Accept-Warnings and X-IFS-Content-Disposition are allowed - any other header is rejected.",
                 "additionalProperties": {"type": "string"},
             },
         },
@@ -307,8 +309,13 @@ def safe_export_name(filename: Any) -> str:
 
 
 def _export_dir() -> Path:
-    downloads = Path.home() / "Downloads"
-    d = downloads if downloads.exists() else Path.home() / ".ifs-mcp" / "exports"
+    """EXPORT_DIR if set, else ~/Downloads, else ~/.ifs-mcp/exports."""
+    custom = os.environ.get("EXPORT_DIR")
+    if custom:
+        d = Path(os.path.abspath(os.path.expanduser(custom)))
+    else:
+        downloads = Path.home() / "Downloads"
+        d = downloads if downloads.exists() else Path.home() / ".ifs-mcp" / "exports"
     d.mkdir(parents=True, exist_ok=True)
     return d
 

@@ -20,7 +20,7 @@ from . import config, endpoints
 from .auth import sessions
 from .auth.oauth import LoginRequired, OAuthManager, TokenRequestError
 
-ALLOWED_REQUEST_HEADERS = ("if-match", "if-none-match", "x-ifs-content-disposition")
+ALLOWED_REQUEST_HEADERS = ("if-match", "if-none-match", "x-ifs-content-disposition", "x-ifs-accept-warnings")
 REQUEST_TIMEOUT_S = 120.0
 
 _BAD_CHARS = re.compile(r"[\x00-\x1f\x7f\\]")

@@ -73,7 +73,7 @@ call_protected_api({ endpoint: "/main/.../CompanySet(Company='10')", method: "PA
 call_protected_api({ endpoint: "/main/.../DocumentUpload", method: "POST", body: {...}, headers: { "X-IFS-Content-Disposition": "attachment; filename=report.pdf" } })
 ```
 
-**Inputs:** `endpoint` (required), `method` (required), `body`, `sessionId`, `environment` (optional - one-off override of the active environment), `headers` (optional - only `If-Match`/`If-None-Match` (OData optimistic concurrency) and `X-IFS-Content-Disposition` (IFS's custom filename header) are allowed; any other header is rejected with `disallowed_headers`)
+**Inputs:** `endpoint` (required), `method` (required), `body`, `sessionId`, `environment` (optional - one-off override of the active environment), `headers` (optional - only `If-Match`/`If-None-Match` (OData optimistic concurrency), `X-IFS-Accept-Warnings` (accepts IFS warnings on a write; the agent is told to send it only after showing the user the warning and getting their agreement) and `X-IFS-Content-Disposition` (IFS's custom filename header) are allowed; any other header is rejected with `disallowed_headers`)
 **Methods:** GET, POST, PUT, DELETE, PATCH
 
 **Large responses:** if the formatted JSON response is over 100 KB, the tool returns a summary instead: the record count, the field names and **one complete sample record**, with options to preview, narrow with `$select`, or export to CSV.
@@ -94,7 +94,7 @@ get_api_guide({ guide: "ifs-framework-client-navigator" }) // Find the projectio
 **When nothing matches:** the tool returns an error that tells the agent not to guess endpoints. Instead it should look the screen up with the `ifs-framework-client-navigator` guide, show you the matching projection(s), and ask before building a new skill (always asking which one when there are several). See [Architecture](ARCHITECTURE.md), design decision 10.
 
 ### 5. export_api_data
-Export large API result sets to a CSV file. Fetches data in batches of 100 records using `$top`/`$skip` pagination and saves to `~/Downloads/` (or `~/.ifs-mcp/exports/` if that doesn't exist). Keyed/singleton endpoints (e.g. `CompanySet(Company='10')`) are detected automatically and exported as a single row, with no pagination applied - IFS rejects `$skip` on those outright. It follows the same rules as `call_protected_api`: the endpoint must start with a single `/`, and non-`GET` methods are blocked on `readOnly` environments. The `filename` is reduced to letters, digits, `.`, `_` and `-`.
+Export large API result sets to a CSV file. Fetches data in batches of 100 records using `$top`/`$skip` pagination and saves to `EXPORT_DIR` if set (see [Configuration](../getting-started/CONFIGURATION.md#export-directory)), otherwise `~/Downloads/` (or `~/.ifs-mcp/exports/` if that doesn't exist). Keyed/singleton endpoints (e.g. `CompanySet(Company='10')`) are detected automatically and exported as a single row, with no pagination applied - IFS rejects `$skip` on those outright. It follows the same rules as `call_protected_api`: the endpoint must start with a single `/`, and non-`GET` methods are blocked on `readOnly` environments. The `filename` is reduced to letters, digits, `.`, `_` and `-`.
 
 ```
 export_api_data({ endpoint: "/main/ifsapplications/...", method: "GET" })
