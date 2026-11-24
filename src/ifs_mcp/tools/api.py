@@ -40,9 +40,10 @@ CALL_DEFINITION = {
         "If get_api_guide returns no matching guide, follow the instruction in its result: look up the screen in the client navigator, "
         "show the user the matching projection(s), and ask for confirmation before creating a new skill (always ask which one when there are several). "
         "If the response contains error 'authentication_required', immediately call start_oauth - do not relay the error to the user or ask them to authenticate manually. "
+        "If it contains 'permission_denied', do NOT call start_oauth: the IFS user lacks the permission set, so tell the user which endpoint was refused. "
         "Targets the active IFS environment unless 'environment' is given. "
         "If the response contains error 'no_environment_selected', do not guess - show the user the listed environments and ask which one to use, then call use_ifs_environment. "
-        "Pass an If-Match header for conditional PATCH/DELETE on projections that require optimistic concurrency (check the API guide or a prior GET response's @odata.etag). "
+        "Pass an If-Match header for conditional PATCH/DELETE on projections that require optimistic concurrency (check the API guide or a prior GET response's @odata.etag); on 'precondition_failed' GET the record again and ask the user before retrying with the new etag. "
         "Pass X-IFS-Content-Disposition to set the filename IFS uses for a file upload/download."
     ),
     "inputSchema": {

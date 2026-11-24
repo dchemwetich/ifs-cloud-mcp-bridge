@@ -23,6 +23,11 @@ Status: **done** (2026-11-14). All six phases complete; v2.0.0 runs on Python.
   login by itself. It now returns `authentication_required` and removes the dead session;
   a missing session does the same. Token-server outages (5xx, network) still return
   `API call failed` and keep the session, since a retry may work.
+- **Changed from rule 9:** only a 401 returns `authentication_required`. A 403 now returns
+  `permission_denied` and tells the model not to log in again: the token is valid but the IFS
+  user lacks the permission set, so a new login hit the same 403 and the model looped. A 412
+  returns `precondition_failed` and tells the model to re-read the record and ask before
+  retrying with the new etag (no automatic retry).
 - There are 3 prompts (projection, HAR, OpenAPI), not 2 as first written below.
 
 ## Goal

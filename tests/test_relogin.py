@@ -34,7 +34,7 @@ def test_rejected_refresh_asks_for_login_and_drops_session(write_config, monkeyp
     assert "dev" not in json.loads((home / ".ifs-mcp" / "session.json").read_text())
 
 
-@pytest.mark.parametrize("status", [500, None])
+@pytest.mark.parametrize("status", [500, 403, None])
 def test_token_server_outage_is_not_a_login_problem(write_config, monkeypatch, status):
     write_config({"activeEnv": "dev", "environments": {"dev": ENV}})
     sessions.set_token("dev", {"accessToken": "old", "refreshToken": "R1", "expiresAt": 0, "issuedAt": 0, "userId": "dev"})

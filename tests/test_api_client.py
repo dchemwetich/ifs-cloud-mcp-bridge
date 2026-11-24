@@ -83,14 +83,47 @@ def test_read_only_enforced_on_target_env(write_config, mock_http):
     assert _call(endpoint="/x", method="GET", session_id="prod")["success"]
 
 
-@pytest.mark.parametrize("status", [401, 403])
-def test_unauthorised_becomes_authentication_required(write_config, mock_http, status):
+def test_unauthorised_becomes_authentication_required(write_config, mock_http):
     write_config({"activeEnv": "dev", "environments": {"dev": ENV}})
     _login()
-    mock_http[1].append(httpx.Response(status, json={"error": "nope"}))
+    mock_http[1].append(httpx.Response(401, json={"error": "nope"}))
     res = _call(endpoint="/x", method="GET")
-    assert res["error"] == "authentication_required" and res["status"] == status
+    assert res["error"] == "authentication_required" and res["status"] == 401
     assert "start_oauth" in res["message"]
+
+
+def test_forbidden_is_a_permission_problem_not_a_login(write_config, mock_http):
+    """A 403 means the user lacks the permission set; re-login would loop on the same 403."""
+    write_config({"activeEnv": "dev", "environments": {"dev": ENV}})
+    _login()
+    ifs_error = {"error": {"code": "FORBIDDEN", "message": "Access denied"}}
+    mock_http[1].append(httpx.Response(403, json=ifs_error))
+    res = _call(endpoint="/x", method="GET")
+    assert res["success"] is False and res["status"] == 403
+    assert res["error"] == "permission_denied"
+    assert "Do not call start_oauth" in res["message"]
+    assert res["details"] == ifs_error["error"]
+    assert sessions.get_token("dev") is not None  # session kept
+
+
+def test_stale_etag_tells_agent_to_reread(write_config, mock_http):
+    write_config({"activeEnv": "dev", "environments": {"dev": ENV}})
+    _login()
+    seen, responses = mock_http
+    responses.append(httpx.Response(412, json={"error": {"code": "PRECONDITION_FAILED"}}))
+    res = _call(endpoint="/x", method="PATCH", body={"a": 1}, headers={"If-Match": 'W/"old"'})
+    assert res["status"] == 412 and res["error"] == "precondition_failed"
+    assert "@odata.etag" in res["message"] and "GET the record again" in res["message"]
+    assert res["details"] == {"code": "PRECONDITION_FAILED"}
+    assert len(seen) == 1  # no automatic retry
+
+
+def test_412_without_json_body_keeps_text(write_config, mock_http):
+    write_config({"activeEnv": "dev", "environments": {"dev": ENV}})
+    _login()
+    mock_http[1].append(httpx.Response(412, text="Precondition Failed"))
+    res = _call(endpoint="/x", method="DELETE", headers={"If-Match": "*"})
+    assert res["error"] == "precondition_failed" and res["details"] == "Precondition Failed"
 
 
 def test_api_error_shape(write_config, mock_http):

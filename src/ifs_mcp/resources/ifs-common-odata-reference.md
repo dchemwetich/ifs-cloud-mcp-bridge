@@ -50,3 +50,24 @@ $filter=Objstate eq IfsApp.CustomerOrderHandling.CustomerOrderState'Released' or
 | Limit results | `$top=N` | `$top=10` |
 | Skip results | `$skip=N` | `$skip=20` |
 | Count results | `$count=true` | `$count=true` |
+
+## Optimistic Concurrency (If-Match / ETag)
+
+Many IFS entities reject an update or delete unless you prove you are changing the version you read.
+
+1. GET the record. Each record carries an `@odata.etag` value, for example `W/"Vy8iQUFBVjJ5QUFHQUFBQkh6QUFBOjEi"`.
+2. Send that exact value in the `If-Match` header on the `PATCH`, `DELETE` or bound action:
+   `headers: { "If-Match": "W/\"Vy8iQUFBVjJ5QUFHQUFBQkh6QUFBOjEi\"" }`
+3. If the call returns `precondition_failed` (HTTP 412), the record was changed in IFS after you read it and nothing was saved. GET it again, show the user what changed, and retry with the new `@odata.etag` only if the user agrees.
+
+> Important: Never retry a 412 with the same etag, never replace it with `If-Match: *`, and never drop the header to force the write - each of those overwrites someone else's change.
+
+## Error Codes from call_protected_api
+
+| `error` | HTTP | Meaning and what to do |
+|---------|------|------------------------|
+| `authentication_required` | 401 | Session missing or expired. Call `start_oauth`. |
+| `permission_denied` | 403 | Signed in, but the IFS user has no permission for this projection or action. Do not log in again; tell the user which endpoint was refused so their IFS administrator can grant the permission set. |
+| `precondition_failed` | 412 | Stale `If-Match` etag. See Optimistic Concurrency above. |
+| `read_only_environment` | - | The environment is marked read-only and the call was not a GET. |
+| `API call failed` | other | IFS's error body is in `message` and `details`. Read it before retrying. |

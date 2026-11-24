@@ -119,7 +119,8 @@ async def call_protected_api(
             f"{exc} Call the start_oauth tool now to open the login window - do not ask the user to do this manually."
         )
     except TokenRequestError as exc:
-        return _http_failure(exc.status, exc.data, str(exc))
+        # Failed to get a token: a 403 here is about the OAuth client, not a projection permission.
+        return _http_failure(exc.status, exc.data, str(exc), from_token_endpoint=True)
     except httpx.HTTPError as exc:
         return _http_failure(None, None, f"{type(exc).__name__}: {exc}")
 
@@ -138,11 +139,31 @@ def _response_data(resp: httpx.Response) -> Any:
         return resp.text
 
 
-def _http_failure(status: int | None, data: Any, fallback_message: str) -> dict[str, Any]:
-    if status in (401, 403):
+def _http_failure(
+    status: int | None, data: Any, fallback_message: str, from_token_endpoint: bool = False
+) -> dict[str, Any]:
+    if status == 401:
         return _auth_required(
             "Session expired or unauthorised. Call the start_oauth tool now to re-authenticate - do not ask the user to do this manually.",
             status,
+        )
+    # 403: the token is valid but the IFS user lacks the permission set. A new login gets the
+    # same user and the same 403, so asking for one only makes the agent loop.
+    if status == 403 and not from_token_endpoint:
+        return _failure(
+            status, "permission_denied", data,
+            "The IFS user is signed in but has no permission for this projection or action. "
+            "Do not call start_oauth again - logging in as the same user will not help. "
+            "Tell the user which endpoint was refused and that their IFS administrator must grant "
+            "the permission set for it (for a client_credentials environment: the service user's permission sets).",
+        )
+    # 412: the If-Match etag no longer matches - someone changed the record since it was read.
+    if status == 412 and not from_token_endpoint:
+        return _failure(
+            status, "precondition_failed", data,
+            "The record was changed in IFS after you read it, so its If-Match etag is out of date and nothing was saved. "
+            "Do not retry with the same etag and do not drop the If-Match header. "
+            "GET the record again, show the user what changed, and retry with the new @odata.etag only if the user agrees.",
         )
     result: dict[str, Any] = {"success": False}
     if status is not None:
@@ -151,3 +172,14 @@ def _http_failure(status: int | None, data: Any, fallback_message: str) -> dict[
     result["message"] = data if data else fallback_message
     result["details"] = (data.get("error") if isinstance(data, dict) else None) or None
     return result
+
+
+def _failure(status: int, error: str, data: Any, message: str) -> dict[str, Any]:
+    """A failure the agent should handle in a specific way; IFS's own error body goes in details."""
+    return {
+        "success": False,
+        "status": status,
+        "error": error,
+        "message": message,
+        "details": (data.get("error") if isinstance(data, dict) else None) or data or None,
+    }
